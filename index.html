@@ -1,13 +1,148 @@
 index.html
 game.js
-style.css
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <title>Meryem için Oyun</title>
-</head>
-<body>
-  <h1>Meryem için oyun yükleniyor 💛</h1>
-</body>
-</html>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let gameState = "start"; // start, play, end, win
+let gravity = 0.6;
+let obstacles = [];
+let obstacleCount = 0;
+
+const meryem = {
+  x: 50,
+  y: 200,
+  w: 30,
+  h: 50,
+  vy: 0,
+  jumping: false
+};
+
+const dila = {
+  x: 700,
+  y: 200,
+  w: 30,
+  h: 50
+};
+
+function resetGame() {
+  obstacles = [];
+  obstacleCount = 0;
+  meryem.y = 200;
+  meryem.vy = 0;
+  gameState = "play";
+}
+
+document.getElementById("startBtn").onclick = () => {
+  resetGame();
+};
+
+document.getElementById("jumpBtn").onclick = jump;
+document.addEventListener("keydown", e => {
+  if (e.code === "Space") jump();
+});
+
+function jump() {
+  if (!meryem.jumping && gameState === "play") {
+    meryem.vy = -10;
+    meryem.jumping = true;
+  }
+}
+
+function createObstacle() {
+  obstacles.push({
+    x: canvas.width,
+    y: 220,
+    w: 30,
+    h: 30
+  });
+}
+
+function drawMeryem() {
+  ctx.fillStyle = "#FFD966"; // sarı saç
+  ctx.fillRect(meryem.x, meryem.y - 10, meryem.w, 10);
+
+  ctx.fillStyle = "#f1c27d"; // yüz
+  ctx.fillRect(meryem.x, meryem.y, meryem.w, meryem.h);
+
+  ctx.fillStyle = "black";
+  ctx.fillText("Meryem", meryem.x - 5, meryem.y - 15);
+}
+
+function drawDila() {
+  ctx.fillStyle = "black"; // siyah saç
+  ctx.fillRect(dila.x, dila.y - 10, dila.w, 10);
+
+  ctx.fillStyle = "#f1c27d";
+  ctx.fillRect(dila.x, dila.y, dila.w, dila.h);
+
+  ctx.fillStyle = "black";
+  ctx.fillText("Dila", dila.x - 5, dila.y - 15);
+}
+
+function update() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (gameState === "play") {
+    meryem.vy += gravity;
+    meryem.y += meryem.vy;
+
+    if (meryem.y >= 200) {
+      meryem.y = 200;
+      meryem.jumping = false;
+    }
+
+    if (Math.random() < 0.02 && obstacleCount < 10) {
+      createObstacle();
+      obstacleCount++;
+    }
+
+    obstacles.forEach(o => {
+      o.x -= 4;
+      ctx.fillStyle = "#8b4513";
+      ctx.fillRect(o.x, o.y, o.w, o.h);
+
+      if (
+        meryem.x < o.x + o.w &&
+        meryem.x + meryem.w > o.x &&
+        meryem.y < o.y + o.h &&
+        meryem.y + meryem.h > o.y
+      ) {
+        gameState = "end";
+      }
+    });
+
+    drawMeryem();
+
+    if (obstacleCount >= 10) {
+      gameState = "win";
+    }
+  }
+
+  if (gameState === "end") {
+    ctx.fillStyle = "red";
+    ctx.font = "24px Arial";
+    ctx.fillText("OYUN BİTTİ", 300, 120);
+    ctx.fillText("YENİDEN DENE AŞKIM YAPARSIN", 200, 160);
+  }
+
+  if (gameState === "win") {
+    meryem.x += 2;
+    drawMeryem();
+    drawDila();
+
+    if (meryem.x + meryem.w >= dila.x) {
+      ctx.fillStyle = "pink";
+      ctx.font = "20px Arial";
+      ctx.fillText(
+        "İyi ki varsın Meryem, sen benim en büyük şanslarımdan birisin.",
+        80,
+        80
+      );
+    }
+  }
+
+  requestAnimationFrame(update);
+}
+
+update();
+
